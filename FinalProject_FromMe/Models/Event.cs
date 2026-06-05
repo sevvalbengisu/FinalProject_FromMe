@@ -15,6 +15,8 @@ public class Event
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    public bool IsPublic { get; set; } = false;
+
     [Required]
     public string OwnerId { get; set; } = string.Empty;
 

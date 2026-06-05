@@ -1,0 +1,157 @@
+@model FinalProject_FromMe.ViewModels.RegisterViewModel
+
+@{
+    ViewData["Title"] = "Register";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h2 class="fw-bold mb-2">Create account</h2>
+                    <p class="text-muted mb-4">
+                        Join FromMe and start sharing event memories.
+                    </p>
+
+                    <form asp-controller="Account" asp-action="Register" method="post" id="registerForm">
+                        @Html.AntiForgeryToken()
+
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="UserName" class="form-label">Username</label>
+                            <input asp-for="UserName"
+                                   class="form-control"
+                                   id="userNameInput"
+                                   placeholder="example: sevval" />
+
+                            <span asp-validation-for="UserName" class="text-danger"></span>
+                            <div id="userNameMessage" class="small mt-1"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label">Email</label>
+                            <input asp-for="Email"
+                                   class="form-control"
+                                   id="emailInput"
+                                   placeholder="your email address" />
+
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                            <div id="emailMessage" class="small mt-1"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Password" class="form-label">Password</label>
+                            <input asp-for="Password" class="form-control" />
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ConfirmPassword" class="form-label">Confirm Password</label>
+                            <input asp-for="ConfirmPassword" class="form-control" />
+                            <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100" id="registerButton">
+                            Register
+                        </button>
+                    </form>
+
+                    <p class="mt-3 mb-0 text-center">
+                        Already have an account?
+                        <a asp-controller="Account" asp-action="Login">Login</a>
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    const userNameInput = document.getElementById("userNameInput");
+    const emailInput = document.getElementById("emailInput");
+    const userNameMessage = document.getElementById("userNameMessage");
+    const emailMessage = document.getElementById("emailMessage");
+    const registerButton = document.getElementById("registerButton");
+
+    let isUserNameAvailable = true;
+    let isEmailAvailable = true;
+
+    let userNameTimer;
+    let emailTimer;
+
+    function updateRegisterButton() {
+        if (!isUserNameAvailable || !isEmailAvailable) {
+            registerButton.disabled = true;
+        } else {
+            registerButton.disabled = false;
+        }
+    }
+
+    userNameInput.addEventListener("input", function () {
+        clearTimeout(userNameTimer);
+
+        const userName = userNameInput.value.trim();
+
+        if (userName.length < 3) {
+            userNameMessage.textContent = "Username must be at least 3 characters.";
+            userNameMessage.className = "small mt-1 text-danger";
+            isUserNameAvailable = false;
+            updateRegisterButton();
+            return;
+        }
+
+        userNameTimer = setTimeout(function () {
+            fetch("/Account/IsUserNameAvailable?userName=" + encodeURIComponent(userName))
+                .then(response => response.json())
+                .then(data => {
+                    userNameMessage.textContent = data.message;
+
+                    if (data.available) {
+                        userNameMessage.className = "small mt-1 text-success";
+                        isUserNameAvailable = true;
+                    } else {
+                        userNameMessage.className = "small mt-1 text-danger";
+                        isUserNameAvailable = false;
+                    }
+
+                    updateRegisterButton();
+                });
+        }, 400);
+    });
+
+    emailInput.addEventListener("input", function () {
+        clearTimeout(emailTimer);
+
+        const email = emailInput.value.trim();
+
+        if (email.indexOf("\u0040") === -1) {
+            emailMessage.textContent = "Please enter a valid email address.";
+            emailMessage.className = "small mt-1 text-danger";
+            isEmailAvailable = false;
+            updateRegisterButton();
+            return;
+        }
+
+        emailTimer = setTimeout(function () {
+            fetch("/Account/IsEmailAvailable?email=" + encodeURIComponent(email))
+                .then(response => response.json())
+                .then(data => {
+                    emailMessage.textContent = data.message;
+
+                    if (data.available) {
+                        emailMessage.className = "small mt-1 text-success";
+                        isEmailAvailable = true;
+                    } else {
+                        emailMessage.className = "small mt-1 text-danger";
+                        isEmailAvailable = false;
+                    }
+
+                    updateRegisterButton();
+                });
+        }, 400);
+    });
+</script>

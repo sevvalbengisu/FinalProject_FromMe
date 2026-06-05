@@ -11,7 +11,7 @@
                 <div class="card-body p-4">
                     <h2 class="fw-bold mb-2">Create a New Event</h2>
                     <p class="text-muted mb-4">
-                        Start a private event space where guests can share memories.
+                        Start an event space where guests can share memories.
                     </p>
 
                     <form asp-controller="Event" asp-action="Create" method="post">
@@ -30,6 +30,20 @@
                                       rows="4"
                                       placeholder="Write a short description for your event"></textarea>
                             <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="IsPublic" class="form-label">Event Visibility</label>
+
+                            <select asp-for="IsPublic" class="form-select">
+                                <option value="false">Private by Link</option>
+                                <option value="true">Public</option>
+                            </select>
+
+                            <small class="text-muted">
+                                Private by Link events are only accessible with the event link.
+                                Public events can appear on the Explore page.
+                            </small>
                         </div>
 
                         <button type="submit" class="btn btn-primary w-100">

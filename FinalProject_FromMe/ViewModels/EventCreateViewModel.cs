@@ -10,4 +10,6 @@ public class EventCreateViewModel
 
     [StringLength(500)]
     public string? Description { get; set; }
+
+    public bool IsPublic { get; set; }
 }

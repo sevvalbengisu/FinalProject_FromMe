@@ -30,7 +30,18 @@
                 <div class="col-md-4 mb-4">
                     <div class="card shadow-sm h-100">
                         <div class="card-body">
-                            <h5 class="card-title fw-bold">@eventItem.Title</h5>
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title fw-bold mb-0">@eventItem.Title</h5>
+
+                                @if (eventItem.IsPublic)
+                                {
+                                    <span class="badge bg-success">Public</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Private Link</span>
+                                }
+                            </div>
 
                             <p class="card-text text-muted">
                                 @eventItem.Description

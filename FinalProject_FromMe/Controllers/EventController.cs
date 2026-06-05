@@ -59,6 +59,7 @@ public class EventController : Controller
             Title = model.Title,
             Description = model.Description,
             CreatedAt = DateTime.UtcNow,
+            IsPublic = model.IsPublic,
             OwnerId = currentUserId
         };
 
@@ -125,6 +126,38 @@ public class EventController : Controller
         };
 
         return View(viewModel);
+    }
+
+    public async Task<IActionResult> Explore(string? search)
+    {
+        var query = _context.Events
+            .Where(e => e.IsPublic)
+            .Include(e => e.Owner)
+            .Include(e => e.Posts)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            query = query.Where(e => e.Title.ToLower().Contains(search.ToLower()));
+        }
+
+        var events = await query
+            .Select(e => new ExploreEventViewModel
+            {
+                EventId = e.Id,
+                Title = e.Title,
+                Description = e.Description,
+                OwnerName = e.Owner != null ? e.Owner.UserName! : "Unknown User",
+                CreatedAt = e.CreatedAt,
+                PostCount = e.Posts.Count,
+                LastActivityAt = e.Posts.Any()
+                    ? e.Posts.Max(p => p.CreatedAt)
+                    : e.CreatedAt
+            })
+            .OrderByDescending(e => e.LastActivityAt)
+            .ToListAsync();
+
+        return View(events);
     }
 
     public IActionResult Join(int id)
