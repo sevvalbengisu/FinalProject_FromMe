@@ -96,6 +96,7 @@ public class EventController : Controller
             Description = eventItem.Description,
             CreatedAt = eventItem.CreatedAt,
             OwnerName = eventItem.Owner?.UserName ?? "Unknown User",
+            IsPublic = eventItem.IsPublic,
             NewPost = new CreatePostViewModel
             {
                 EventId = eventItem.Id

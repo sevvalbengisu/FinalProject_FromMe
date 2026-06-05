@@ -29,3 +29,32 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+
+.text-post-preview {
+    height: 220px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.text-post-preview-content {
+    text-align: center;
+}
+
+.text-post-preview-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+}
+
+.text-post-preview-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.text-post-preview-subtitle {
+    font-size: 14px;
+    color: #6c757d;
+}

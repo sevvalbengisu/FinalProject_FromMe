@@ -12,6 +12,8 @@ public class EventDetailViewModel
 
     public string OwnerName { get; set; } = string.Empty;
 
+    public bool IsPublic { get; set; }
+
     public List<PostViewModel> Posts { get; set; } = new List<PostViewModel>();
 
     public CreatePostViewModel NewPost { get; set; } = new CreatePostViewModel();

@@ -11,7 +11,18 @@
         <div class="card-body p-4">
             <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
                 <div>
-                    <h2 class="fw-bold mb-1">@Model.Title</h2>
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <h2 class="fw-bold mb-0">@Model.Title</h2>
+
+                        @if (Model.IsPublic)
+                        {
+                            <span class="badge bg-success">Public</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Private by Link</span>
+                        }
+                    </div>
 
                     @if (!string.IsNullOrWhiteSpace(Model.Description))
                     {
@@ -31,8 +42,13 @@
             <hr />
 
             <label class="form-label fw-semibold">Share event link</label>
+
             <div class="input-group">
-                <input class="form-control" value="@joinLink" readonly />
+                <input class="form-control" id="eventLinkInput" value="@joinLink" readonly />
+
+                <button class="btn btn-outline-primary" type="button" onclick="copyEventLink()">
+                    Copy Link
+                </button>
             </div>
 
             <small class="text-muted">
@@ -101,9 +117,14 @@
                         }
                         else
                         {
-                            <div class="bg-light d-flex align-items-center justify-content-center"
-                                 style="height: 220px;">
-                                <span class="text-muted">Text Post</span>
+                            <div class="text-post-preview">
+                                <div class="text-post-preview-content">
+                                    <div class="text-post-preview-icon">✍️</div>
+                                    <div class="text-post-preview-title">Text Memory</div>
+                                    <div class="text-post-preview-subtitle">
+                                        This post contains a written memory.
+                                    </div>
+                                </div>
                             </div>
                         }
 
@@ -196,3 +217,16 @@
         </div>
     }
 </div>
+
+<script>
+    function copyEventLink() {
+        const linkInput = document.getElementById("eventLinkInput");
+
+        linkInput.select();
+        linkInput.setSelectionRange(0, 99999);
+
+        navigator.clipboard.writeText(linkInput.value);
+
+        alert("Event link copied!");
+    }
+</script>
