@@ -43,9 +43,11 @@ public class PostController : Controller
             return NotFound();
         }
 
+        // Boş post kontrolü burası:
+        // Kullanıcı hem yazı yazmadıysa hem de fotoğraf seçmediyse post oluşturmayız.
         if (string.IsNullOrWhiteSpace(model.Text) && model.Image == null)
         {
-            return RedirectToAction("Details", "Event", new { id = model.EventId });
+            return Redirect(Url.Action("Details", "Event", new { id = model.EventId }) + "#share-form");
         }
 
         string? imagePath = null;
@@ -83,6 +85,7 @@ public class PostController : Controller
         _context.Posts.Add(post);
         await _context.SaveChangesAsync();
 
-        return RedirectToAction("Details", "Event", new { id = model.EventId });
+        // Post oluşturulduktan sonra sayfa direkt o postun olduğu yere insin.
+        return Redirect(Url.Action("Details", "Event", new { id = model.EventId }) + $"#post-{post.Id}");
     }
 }

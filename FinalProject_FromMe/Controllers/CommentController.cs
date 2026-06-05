@@ -8,12 +8,12 @@ using Microsoft.EntityFrameworkCore;
 namespace FinalProject_FromMe.Controllers;
 
 [Authorize]
-public class LikeController : Controller
+public class CommentController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
 
-    public LikeController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+    public CommentController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
     {
         _context = context;
         _userManager = userManager;
@@ -21,7 +21,7 @@ public class LikeController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Toggle(int postId, int eventId)
+    public async Task<IActionResult> Create(int postId, int eventId, string text)
     {
         var currentUserId = _userManager.GetUserId(User);
 
@@ -37,27 +37,25 @@ public class LikeController : Controller
             return NotFound();
         }
 
-        var existingLike = await _context.Likes
-            .FirstOrDefaultAsync(l => l.PostId == postId && l.UserId == currentUserId);
-
-        if (existingLike == null)
+        // Boş yorum kontrolü:
+        // Kullanıcı boş yorum gönderdiyse yorum oluşturmayız.
+        if (string.IsNullOrWhiteSpace(text))
         {
-            var like = new Like
-            {
-                PostId = postId,
-                UserId = currentUserId,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            _context.Likes.Add(like);
-        }
-        else
-        {
-            _context.Likes.Remove(existingLike);
+            return Redirect(Url.Action("Details", "Event", new { id = eventId }) + $"#post-{postId}");
         }
 
+        var comment = new Comment
+        {
+            Text = text,
+            PostId = postId,
+            UserId = currentUserId,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.Comments.Add(comment);
         await _context.SaveChangesAsync();
 
+        // Yorum eklendikten sonra sayfa ilgili postun olduğu yere geri dönsün.
         return Redirect(Url.Action("Details", "Event", new { id = eventId }) + $"#post-{postId}");
     }
 }
