@@ -70,86 +70,86 @@ public class EventController : Controller
     }
 
     public async Task<IActionResult> Details(int id, string sort = "newest")
-{
-    var currentUserId = _userManager.GetUserId(User);
-
-    var eventItem = await _context.Events
-        .Include(e => e.Owner)
-        .Include(e => e.Posts)
-            .ThenInclude(p => p.User)
-        .Include(e => e.Posts)
-            .ThenInclude(p => p.Likes)
-        .Include(e => e.Posts)
-            .ThenInclude(p => p.Comments)
-                .ThenInclude(c => c.User)
-        .FirstOrDefaultAsync(e => e.Id == id);
-
-    if (eventItem == null)
     {
-        return NotFound();
-    }
+        var currentUserId = _userManager.GetUserId(User);
 
-    var postsQuery = eventItem.Posts.AsEnumerable();
+        var eventItem = await _context.Events
+            .Include(e => e.Owner)
+            .Include(e => e.Posts)
+                .ThenInclude(p => p.User)
+            .Include(e => e.Posts)
+                .ThenInclude(p => p.Likes)
+            .Include(e => e.Posts)
+                .ThenInclude(p => p.Comments)
+                    .ThenInclude(c => c.User)
+            .FirstOrDefaultAsync(e => e.Id == id);
 
-    if (sort == "oldest")
-    {
-        postsQuery = postsQuery.OrderBy(p => p.CreatedAt);
-    }
-    else if (sort == "mostLiked")
-    {
-        postsQuery = postsQuery
-            .OrderByDescending(p => p.Likes.Count)
-            .ThenByDescending(p => p.CreatedAt);
-    }
-    else
-    {
-        sort = "newest";
-        postsQuery = postsQuery.OrderByDescending(p => p.CreatedAt);
-    }
-
-    var viewModel = new EventDetailViewModel
-    {
-        EventId = eventItem.Id,
-        Title = eventItem.Title,
-        Description = eventItem.Description,
-        CreatedAt = eventItem.CreatedAt,
-        OwnerName = eventItem.Owner?.UserName ?? "Unknown User",
-        IsPublic = eventItem.IsPublic,
-        IsCurrentUserEventOwner = eventItem.OwnerId == currentUserId,
-        CurrentSort = sort,
-        NewPost = new CreatePostViewModel
+        if (eventItem == null)
         {
-            EventId = eventItem.Id
-        },
-        Posts = postsQuery
-            .Select(p => new PostViewModel
+            return NotFound();
+        }
+
+        var postsQuery = eventItem.Posts.AsEnumerable();
+
+        if (sort == "oldest")
+        {
+            postsQuery = postsQuery.OrderBy(p => p.CreatedAt);
+        }
+        else if (sort == "mostLiked")
+        {
+            postsQuery = postsQuery
+                .OrderByDescending(p => p.Likes.Count)
+                .ThenByDescending(p => p.CreatedAt);
+        }
+        else
+        {
+            sort = "newest";
+            postsQuery = postsQuery.OrderByDescending(p => p.CreatedAt);
+        }
+
+        var viewModel = new EventDetailViewModel
+        {
+            EventId = eventItem.Id,
+            Title = eventItem.Title,
+            Description = eventItem.Description,
+            CreatedAt = eventItem.CreatedAt,
+            OwnerName = eventItem.Owner?.UserName ?? "Unknown User",
+            IsPublic = eventItem.IsPublic,
+            IsCurrentUserEventOwner = eventItem.OwnerId == currentUserId,
+            CurrentSort = sort,
+            NewPost = new CreatePostViewModel
             {
-                Id = p.Id,
-                Text = p.Text,
-                ImagePath = p.ImagePath,
-                CreatedAt = p.CreatedAt,
-                UserName = p.User?.UserName ?? "Unknown User",
-                LikeCount = p.Likes.Count,
-                IsLikedByCurrentUser = p.Likes.Any(l => l.UserId == currentUserId),
-                CanCurrentUserDelete = p.UserId == currentUserId || eventItem.OwnerId == currentUserId,
-                Comments = p.Comments
-                    .OrderBy(c => c.CreatedAt)
-                    .Select(c => new CommentViewModel
-                    {
-                        Id = c.Id,
-                        Text = c.Text,
-                        UserName = c.User?.UserName ?? "Unknown User",
-                        CreatedAt = c.CreatedAt
-                    })
-                    .ToList()
-            })
-            .ToList()
-    };
+                EventId = eventItem.Id
+            },
+            Posts = postsQuery
+                .Select(p => new PostViewModel
+                {
+                    Id = p.Id,
+                    Text = p.Text,
+                    ImagePath = p.ImagePath,
+                    CreatedAt = p.CreatedAt,
+                    UserName = p.User?.UserName ?? "Unknown User",
+                    LikeCount = p.Likes.Count,
+                    IsLikedByCurrentUser = p.Likes.Any(l => l.UserId == currentUserId),
+                    CanCurrentUserDelete = p.UserId == currentUserId || eventItem.OwnerId == currentUserId,
+                    Comments = p.Comments
+                        .OrderBy(c => c.CreatedAt)
+                        .Select(c => new CommentViewModel
+                        {
+                            Id = c.Id,
+                            Text = c.Text,
+                            UserName = c.User?.UserName ?? "Unknown User",
+                            CreatedAt = c.CreatedAt
+                        })
+                        .ToList()
+                })
+                .ToList()
+        };
 
-    return View(viewModel);
-}
+        return View(viewModel);
+    }
 
-    public async Task<IActionResult> Explore(string? search)
+    public async Task<IActionResult> Explore(string? search, string? owner)
     {
         var query = _context.Events
             .Where(e => e.IsPublic)
@@ -157,9 +157,21 @@ public class EventController : Controller
             .Include(e => e.Posts)
             .AsQueryable();
 
+        if (!string.IsNullOrWhiteSpace(owner))
+        {
+            query = query.Where(e =>
+                e.Owner != null &&
+                e.Owner.UserName != null &&
+                e.Owner.UserName.ToLower() == owner.ToLower());
+        }
+
         if (!string.IsNullOrWhiteSpace(search))
         {
-            query = query.Where(e => e.Title.ToLower().Contains(search.ToLower()));
+            query = query.Where(e =>
+                e.Title.ToLower().Contains(search.ToLower()) ||
+                (e.Owner != null &&
+                 e.Owner.UserName != null &&
+                 e.Owner.UserName.ToLower().Contains(search.ToLower())));
         }
 
         var events = await query
@@ -178,7 +190,14 @@ public class EventController : Controller
             .OrderByDescending(e => e.LastActivityAt)
             .ToListAsync();
 
-        return View(events);
+        var viewModel = new ExploreIndexViewModel
+        {
+            Search = search,
+            Owner = owner,
+            Events = events
+        };
+
+        return View(viewModel);
     }
 
     public IActionResult Join(int id)

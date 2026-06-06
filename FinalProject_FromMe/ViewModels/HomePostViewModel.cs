@@ -16,6 +16,8 @@ public class HomePostViewModel
 
     public string EventTitle { get; set; } = string.Empty;
 
+    public string EventOwnerName { get; set; } = string.Empty;
+
     public bool EventIsPublic { get; set; }
 
     public int LikeCount { get; set; }

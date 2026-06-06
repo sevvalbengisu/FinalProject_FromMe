@@ -18,11 +18,13 @@
                     <form asp-controller="Account" asp-action="Login" method="post">
                         @Html.AntiForgeryToken()
 
+                        <input type="hidden" asp-for="ReturnUrl" />
+
                         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
                         <div class="mb-3">
                             <label asp-for="Email" class="form-label">Email</label>
-                            <input asp-for="Email" class="form-control" placeholder="you@example.com" />
+                            <input asp-for="Email" class="form-control" placeholder="your email address" />
                             <span asp-validation-for="Email" class="text-danger"></span>
                         </div>
 
@@ -46,7 +48,11 @@
 
                     <p class="mt-3 mb-0 text-center">
                         Do not have an account?
-                        <a asp-controller="Account" asp-action="Register">Register</a>
+                        <a asp-controller="Account"
+                           asp-action="Register"
+                           asp-route-returnUrl="@Model.ReturnUrl">
+                            Register
+                        </a>
                     </p>
                 </div>
             </div>

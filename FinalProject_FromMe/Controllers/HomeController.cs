@@ -29,6 +29,7 @@ public class HomeController : Controller
                 .Where(p => p.UserId == currentUserId)
                 .Include(p => p.User)
                 .Include(p => p.Event)
+                    .ThenInclude(e => e!.Owner)
                 .Include(p => p.Likes)
                 .Include(p => p.Comments)
                 .OrderByDescending(p => p.CreatedAt)
@@ -42,6 +43,7 @@ public class HomeController : Controller
                     UserName = p.User != null ? p.User.UserName! : "Unknown User",
                     EventId = p.EventId,
                     EventTitle = p.Event != null ? p.Event.Title : "Unknown Event",
+                    EventOwnerName = p.Event != null && p.Event.Owner != null ? p.Event.Owner.UserName! : "Unknown User",
                     EventIsPublic = p.Event != null && p.Event.IsPublic,
                     LikeCount = p.Likes.Count,
                     CommentCount = p.Comments.Count

@@ -21,9 +21,12 @@ public class AccountController : Controller
 
     [HttpGet]
     [AllowAnonymous]
-    public IActionResult Register()
+    public IActionResult Register(string? returnUrl = null)
     {
-        return View(new RegisterViewModel());
+        return View(new RegisterViewModel
+        {
+            ReturnUrl = returnUrl
+        });
     }
 
     [HttpPost]
@@ -63,6 +66,12 @@ public class AccountController : Controller
         if (result.Succeeded)
         {
             await _signInManager.SignInAsync(user, isPersistent: false);
+
+            if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
+            {
+                return LocalRedirect(model.ReturnUrl);
+            }
+
             return RedirectToAction("Index", "Home");
         }
 
@@ -76,9 +85,12 @@ public class AccountController : Controller
 
     [HttpGet]
     [AllowAnonymous]
-    public IActionResult Login()
+    public IActionResult Login(string? returnUrl = null)
     {
-        return View(new LoginViewModel());
+        return View(new LoginViewModel
+        {
+            ReturnUrl = returnUrl
+        });
     }
 
     [HttpPost]
@@ -107,6 +119,11 @@ public class AccountController : Controller
 
         if (result.Succeeded)
         {
+            if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
+            {
+                return LocalRedirect(model.ReturnUrl);
+            }
+
             return RedirectToAction("Index", "Home");
         }
 
@@ -192,5 +209,12 @@ public class AccountController : Controller
             available = true,
             message = "Email is available."
         });
+    }
+
+    [HttpGet]
+    [AllowAnonymous]
+    public IActionResult AccessDenied()
+    {
+        return View();
     }
 }
