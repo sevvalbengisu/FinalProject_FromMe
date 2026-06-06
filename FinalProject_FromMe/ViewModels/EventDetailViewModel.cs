@@ -14,6 +14,10 @@ public class EventDetailViewModel
 
     public bool IsPublic { get; set; }
 
+    public bool IsCurrentUserEventOwner { get; set; }
+
+    public string CurrentSort { get; set; } = "newest";
+
     public List<PostViewModel> Posts { get; set; } = new List<PostViewModel>();
 
     public CreatePostViewModel NewPost { get; set; } = new CreatePostViewModel();

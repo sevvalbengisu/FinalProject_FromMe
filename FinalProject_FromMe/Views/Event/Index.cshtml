@@ -56,9 +56,22 @@
                             <a asp-controller="Event"
                                asp-action="Details"
                                asp-route-id="@eventItem.Id"
-                               class="btn btn-outline-primary w-100">
+                               class="btn btn-outline-primary w-100 mb-2">
                                 Open Event
                             </a>
+
+                            <form asp-controller="Event"
+                                  asp-action="Delete"
+                                  method="post"
+                                  onsubmit="return confirm('Are you sure you want to delete this event? All posts, likes and comments inside it will be deleted.');">
+                                @Html.AntiForgeryToken()
+
+                                <input type="hidden" name="id" value="@eventItem.Id" />
+
+                                <button type="submit" class="btn btn-outline-danger w-100">
+                                    Delete Event
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>

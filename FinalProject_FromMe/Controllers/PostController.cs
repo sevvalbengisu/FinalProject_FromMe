@@ -43,8 +43,6 @@ public class PostController : Controller
             return NotFound();
         }
 
-        // Boş post kontrolü burası:
-        // Kullanıcı hem yazı yazmadıysa hem de fotoğraf seçmediyse post oluşturmayız.
         if (string.IsNullOrWhiteSpace(model.Text) && model.Image == null)
         {
             return Redirect(Url.Action("Details", "Event", new { id = model.EventId }) + "#share-form");
@@ -85,7 +83,51 @@ public class PostController : Controller
         _context.Posts.Add(post);
         await _context.SaveChangesAsync();
 
-        // Post oluşturulduktan sonra sayfa direkt o postun olduğu yere insin.
         return Redirect(Url.Action("Details", "Event", new { id = model.EventId }) + $"#post-{post.Id}");
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(int postId, int eventId)
+    {
+        var currentUserId = _userManager.GetUserId(User);
+
+        if (currentUserId == null)
+        {
+            return Unauthorized();
+        }
+
+        var post = await _context.Posts
+            .Include(p => p.Event)
+            .FirstOrDefaultAsync(p => p.Id == postId);
+
+        if (post == null)
+        {
+            return NotFound();
+        }
+
+        var isPostOwner = post.UserId == currentUserId;
+        var isEventOwner = post.Event != null && post.Event.OwnerId == currentUserId;
+
+        if (!isPostOwner && !isEventOwner)
+        {
+            return Forbid();
+        }
+
+        if (!string.IsNullOrWhiteSpace(post.ImagePath))
+        {
+            var relativePath = post.ImagePath.TrimStart('/');
+            var fullPath = Path.Combine(_environment.WebRootPath, relativePath);
+
+            if (System.IO.File.Exists(fullPath))
+            {
+                System.IO.File.Delete(fullPath);
+            }
+        }
+
+        _context.Posts.Remove(post);
+        await _context.SaveChangesAsync();
+
+        return RedirectToAction("Details", "Event", new { id = eventId });
     }
 }

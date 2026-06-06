@@ -16,5 +16,7 @@ public class PostViewModel
 
     public bool IsLikedByCurrentUser { get; set; }
 
+    public bool CanCurrentUserDelete { get; set; }
+
     public List<CommentViewModel> Comments { get; set; } = new List<CommentViewModel>();
 }

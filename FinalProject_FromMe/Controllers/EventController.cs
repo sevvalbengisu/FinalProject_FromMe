@@ -69,65 +69,85 @@ public class EventController : Controller
         return RedirectToAction("Details", new { id = newEvent.Id });
     }
 
-    public async Task<IActionResult> Details(int id)
+    public async Task<IActionResult> Details(int id, string sort = "newest")
+{
+    var currentUserId = _userManager.GetUserId(User);
+
+    var eventItem = await _context.Events
+        .Include(e => e.Owner)
+        .Include(e => e.Posts)
+            .ThenInclude(p => p.User)
+        .Include(e => e.Posts)
+            .ThenInclude(p => p.Likes)
+        .Include(e => e.Posts)
+            .ThenInclude(p => p.Comments)
+                .ThenInclude(c => c.User)
+        .FirstOrDefaultAsync(e => e.Id == id);
+
+    if (eventItem == null)
     {
-        var currentUserId = _userManager.GetUserId(User);
-
-        var eventItem = await _context.Events
-            .Include(e => e.Owner)
-            .Include(e => e.Posts)
-                .ThenInclude(p => p.User)
-            .Include(e => e.Posts)
-                .ThenInclude(p => p.Likes)
-            .Include(e => e.Posts)
-                .ThenInclude(p => p.Comments)
-                    .ThenInclude(c => c.User)
-            .FirstOrDefaultAsync(e => e.Id == id);
-
-        if (eventItem == null)
-        {
-            return NotFound();
-        }
-
-        var viewModel = new EventDetailViewModel
-        {
-            EventId = eventItem.Id,
-            Title = eventItem.Title,
-            Description = eventItem.Description,
-            CreatedAt = eventItem.CreatedAt,
-            OwnerName = eventItem.Owner?.UserName ?? "Unknown User",
-            IsPublic = eventItem.IsPublic,
-            NewPost = new CreatePostViewModel
-            {
-                EventId = eventItem.Id
-            },
-            Posts = eventItem.Posts
-                .OrderByDescending(p => p.CreatedAt)
-                .Select(p => new PostViewModel
-                {
-                    Id = p.Id,
-                    Text = p.Text,
-                    ImagePath = p.ImagePath,
-                    CreatedAt = p.CreatedAt,
-                    UserName = p.User?.UserName ?? "Unknown User",
-                    LikeCount = p.Likes.Count,
-                    IsLikedByCurrentUser = p.Likes.Any(l => l.UserId == currentUserId),
-                    Comments = p.Comments
-                        .OrderBy(c => c.CreatedAt)
-                        .Select(c => new CommentViewModel
-                        {
-                            Id = c.Id,
-                            Text = c.Text,
-                            UserName = c.User?.UserName ?? "Unknown User",
-                            CreatedAt = c.CreatedAt
-                        })
-                        .ToList()
-                })
-                .ToList()
-        };
-
-        return View(viewModel);
+        return NotFound();
     }
+
+    var postsQuery = eventItem.Posts.AsEnumerable();
+
+    if (sort == "oldest")
+    {
+        postsQuery = postsQuery.OrderBy(p => p.CreatedAt);
+    }
+    else if (sort == "mostLiked")
+    {
+        postsQuery = postsQuery
+            .OrderByDescending(p => p.Likes.Count)
+            .ThenByDescending(p => p.CreatedAt);
+    }
+    else
+    {
+        sort = "newest";
+        postsQuery = postsQuery.OrderByDescending(p => p.CreatedAt);
+    }
+
+    var viewModel = new EventDetailViewModel
+    {
+        EventId = eventItem.Id,
+        Title = eventItem.Title,
+        Description = eventItem.Description,
+        CreatedAt = eventItem.CreatedAt,
+        OwnerName = eventItem.Owner?.UserName ?? "Unknown User",
+        IsPublic = eventItem.IsPublic,
+        IsCurrentUserEventOwner = eventItem.OwnerId == currentUserId,
+        CurrentSort = sort,
+        NewPost = new CreatePostViewModel
+        {
+            EventId = eventItem.Id
+        },
+        Posts = postsQuery
+            .Select(p => new PostViewModel
+            {
+                Id = p.Id,
+                Text = p.Text,
+                ImagePath = p.ImagePath,
+                CreatedAt = p.CreatedAt,
+                UserName = p.User?.UserName ?? "Unknown User",
+                LikeCount = p.Likes.Count,
+                IsLikedByCurrentUser = p.Likes.Any(l => l.UserId == currentUserId),
+                CanCurrentUserDelete = p.UserId == currentUserId || eventItem.OwnerId == currentUserId,
+                Comments = p.Comments
+                    .OrderBy(c => c.CreatedAt)
+                    .Select(c => new CommentViewModel
+                    {
+                        Id = c.Id,
+                        Text = c.Text,
+                        UserName = c.User?.UserName ?? "Unknown User",
+                        CreatedAt = c.CreatedAt
+                    })
+                    .ToList()
+            })
+            .ToList()
+    };
+
+    return View(viewModel);
+}
 
     public async Task<IActionResult> Explore(string? search)
     {
@@ -164,5 +184,36 @@ public class EventController : Controller
     public IActionResult Join(int id)
     {
         return RedirectToAction("Details", new { id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var currentUserId = _userManager.GetUserId(User);
+
+        if (currentUserId == null)
+        {
+            return Unauthorized();
+        }
+
+        var eventItem = await _context.Events
+            .Include(e => e.Posts)
+            .FirstOrDefaultAsync(e => e.Id == id);
+
+        if (eventItem == null)
+        {
+            return NotFound();
+        }
+
+        if (eventItem.OwnerId != currentUserId)
+        {
+            return Forbid();
+        }
+
+        _context.Events.Remove(eventItem);
+        await _context.SaveChangesAsync();
+
+        return RedirectToAction("Index");
     }
 }
