@@ -4,47 +4,121 @@
     ViewData["Title"] = "Home";
 }
 
-<div class="container mt-4">
+@if (User.Identity == null || !User.Identity.IsAuthenticated)
+{
+    <section class="landing-hero">
+        <div class="container">
+            <div class="row align-items-center g-5">
 
-    @if (User.Identity == null || !User.Identity.IsAuthenticated)
-    {
-        <div class="row align-items-center mt-5">
-            <div class="col-md-7">
-                <h1 class="display-5 fw-bold">FromMe</h1>
+                <div class="col-lg-6">
+                    <img src="/images/fromme-logo.png" alt="FromMe Logo" class="hero-logo mb-4" />
 
-                <p class="lead text-muted">
-                    Create event-based memory spaces where guests can share photos, messages, likes and comments.
-                </p>
+                    <h1 class="display-5 fw-bold mb-3">
+                        Capture moments from every event, together.
+                    </h1>
 
-                <div class="mt-4">
-                    <a asp-controller="Account" asp-action="Register" class="btn btn-primary btn-lg me-2">
-                        Get Started
-                    </a>
+                    <p class="lead text-muted mb-4">
+                        FromMe helps you create event-based memory spaces where guests can share photos,
+                        written notes, likes and comments in one place.
+                    </p>
 
-                    <a asp-controller="Account" asp-action="Login" class="btn btn-outline-secondary btn-lg">
-                        Login
-                    </a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a asp-controller="Account" asp-action="Register" class="btn btn-primary btn-lg">
+                            Get Started
+                        </a>
+
+                        <a asp-controller="Event" asp-action="Explore" class="btn btn-outline-secondary btn-lg">
+                            Explore Events
+                        </a>
+                    </div>
                 </div>
+
+                <div class="col-lg-6">
+                    <div class="hero-preview-wrapper">
+                        <div class="preview-card preview-card-main fromme-accent-card accent-0">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <div class="small text-muted">Public Event</div>
+                                    <h5 class="fw-bold mb-0">Graduation Night</h5>
+                                </div>
+                                <span class="badge bg-success">Public</span>
+                            </div>
+
+                            <p class="text-muted mb-3">
+                                Friends are sharing photos, notes and memories from the night.
+                            </p>
+
+                            <div class="mini-post">
+                                <strong>ayse</strong>
+                                <p class="mb-1">Such a beautiful memory from today!</p>
+                                <small class="text-muted">12 like(s) · 4 comment(s)</small>
+                            </div>
+                        </div>
+
+                        <div class="preview-card preview-card-small fromme-accent-card accent-1">
+                            <div class="small text-muted">Private Link</div>
+                            <h6 class="fw-bold mb-1">Birthday Memories</h6>
+                            <small class="text-muted">8 post(s)</small>
+                        </div>
+
+                        <div class="preview-card preview-card-small second fromme-accent-card accent-3">
+                            <div class="small text-muted">Public Event</div>
+                            <h6 class="fw-bold mb-1">Wedding Day</h6>
+                            <small class="text-muted">21 post(s)</small>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <section class="landing-section">
+        <div class="container">
+            <div class="text-center mb-4">
+                <h2 class="fw-bold">How it works</h2>
+                <p class="text-muted">
+                    A simple way to collect event memories from everyone.
+                </p>
             </div>
 
-            <div class="col-md-5 mt-4 mt-md-0">
-                <div class="card shadow-sm fromme-accent-card accent-0">
-                    <div class="card-body p-4">
-                        <h5 class="fw-bold">How it works</h5>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="landing-card h-100">
+                        <div class="landing-icon">🎉</div>
+                        <h5 class="fw-bold">Create an Event</h5>
+                        <p class="text-muted mb-0">
+                            Start a memory space for birthdays, weddings, graduations or any special day.
+                        </p>
+                    </div>
+                </div>
 
-                        <ol class="text-muted mb-0">
-                            <li>Create an event.</li>
-                            <li>Share the event link with guests.</li>
-                            <li>Guests join, post photos or notes.</li>
-                            <li>Everyone inside the event can like and comment.</li>
-                        </ol>
+                <div class="col-md-4">
+                    <div class="landing-card h-100">
+                        <div class="landing-icon">🔗</div>
+                        <h5 class="fw-bold">Share the Link</h5>
+                        <p class="text-muted mb-0">
+                            Invite guests with a simple event link. Private events stay hidden from Explore.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="landing-card h-100">
+                        <div class="landing-icon">📸</div>
+                        <h5 class="fw-bold">Collect Memories</h5>
+                        <p class="text-muted mb-0">
+                            Guests can share photos, text memories, likes and comments inside the event.
+                        </p>
                     </div>
                 </div>
             </div>
         </div>
-    }
-    else
-    {
+    </section>
+}
+else
+{
+    <div class="container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
             <div>
                 <h2 class="fw-bold mb-1">My Recent Posts</h2>
@@ -152,5 +226,5 @@
                 }
             </div>
         }
-    }
-</div>
+    </div>
+}

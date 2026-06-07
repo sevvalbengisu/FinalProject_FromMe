@@ -1,5 +1,7 @@
-htmhtml {
+html {
     font-size: 14px;
+    position: relative;
+    min-height: 100%;
 }
 
 @media (min-width: 768px) {
@@ -8,21 +10,28 @@ htmhtml {
     }
 }
 
+body {
+    min-height: 100vh;
+    margin-bottom: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+body > .container-fluid {
+    flex: 1 0 auto;
+}
+
+.footer {
+    flex-shrink: 0;
+    padding: 16px 0;
+}
+
 .btn:focus,
 .btn:active:focus,
 .btn-link.nav-link:focus,
 .form-control:focus,
 .form-check-input:focus {
     box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-    position: relative;
-    min-height: 100%;
-}
-
-body {
-    margin-bottom: 60px;
 }
 
 .form-floating > .form-control-plaintext::placeholder,
@@ -34,6 +43,19 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder,
 .form-floating > .form-control:focus::placeholder {
     text-align: start;
+}
+
+/* Logo */
+.navbar-logo {
+    height: 64px;
+    width: auto;
+    object-fit: contain;
+}
+
+.hero-logo {
+    max-width: 430px;
+    width: 100%;
+    height: auto;
 }
 
 /* FromMe visual identity */
@@ -84,7 +106,7 @@ body {
     text-decoration: underline;
 }
 
-/* Padlet-like / masonry post layout */
+/* Padlet-like masonry post layout */
 .masonry-grid {
     column-count: 4;
     column-gap: 1.5rem;
@@ -111,6 +133,73 @@ body {
     overflow-y: auto;
 }
 
+/* Landing page */
+.landing-hero {
+    padding: 90px 0 80px;
+    background: linear-gradient(135deg, #fff 0%, #fff5f4 100%);
+}
+
+.landing-section {
+    padding: 65px 0;
+}
+
+.hero-preview-wrapper {
+    position: relative;
+    min-height: 360px;
+}
+
+.preview-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 22px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+}
+
+.preview-card-main {
+    max-width: 430px;
+    margin-left: auto;
+}
+
+.preview-card-small {
+    position: absolute;
+    width: 230px;
+    left: 20px;
+    bottom: 40px;
+}
+
+.preview-card-small.second {
+    left: auto;
+    right: 10px;
+    bottom: -5px;
+}
+
+.mini-post {
+    background: #faf7f6;
+    border: 1px solid #eadedb;
+    border-radius: 12px;
+    padding: 14px;
+}
+
+.landing-card,
+.feature-card,
+.cta-box {
+    background: #ffffff;
+    border: 1px solid #eadedb;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.04);
+}
+
+.landing-icon {
+    font-size: 34px;
+    margin-bottom: 12px;
+}
+
+.cta-box {
+    max-width: 760px;
+    margin: 0 auto;
+}
+
 /* Responsive masonry columns */
 @media (max-width: 1200px) {
     .masonry-grid {
@@ -122,10 +211,29 @@ body {
     .masonry-grid {
         column-count: 2;
     }
+
+    .navbar-logo {
+        height: 48px;
+    }
 }
 
 @media (max-width: 576px) {
     .masonry-grid {
         column-count: 1;
+    }
+}
+
+@media (max-width: 992px) {
+    .hero-preview-wrapper {
+        min-height: auto;
+    }
+
+    .preview-card-main,
+    .preview-card-small,
+    .preview-card-small.second {
+        position: static;
+        width: 100%;
+        max-width: 100%;
+        margin-bottom: 16px;
     }
 }

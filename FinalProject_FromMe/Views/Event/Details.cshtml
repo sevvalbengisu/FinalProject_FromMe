@@ -3,11 +3,12 @@
 @{
     ViewData["Title"] = Model.Title;
     var joinLink = $"{Context.Request.Scheme}://{Context.Request.Host}/Event/Join/{Model.EventId}";
+    var eventAccentClass = $"accent-{Model.EventId % 5}";
 }
 
 <div class="container mt-4">
 
-    <div class="card shadow-sm mb-4">
+    <div class="card shadow-sm mb-4 fromme-accent-card @eventAccentClass">
         <div class="card-body p-4">
             <div>
                 <div class="d-flex align-items-center gap-2 mb-1">
@@ -128,7 +129,7 @@
             @foreach (var post in Model.Posts)
             {
                 <div class="masonry-item" id="post-@post.Id">
-                    <div class="card shadow-sm post-card">
+                    <div class="card shadow-sm post-card fromme-accent-card @eventAccentClass">
 
                         @if (!string.IsNullOrWhiteSpace(post.ImagePath))
                         {
