@@ -10,28 +10,41 @@
 
     <div class="card shadow-sm mb-4 fromme-accent-card @eventAccentClass">
         <div class="card-body p-4">
-            <div>
-                <div class="d-flex align-items-center gap-2 mb-1">
-                    <h2 class="fw-bold mb-0">@Model.Title</h2>
 
-                    @if (Model.IsPublic)
+            <div class="d-flex justify-content-between align-items-start gap-3">
+                <div>
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <h2 class="fw-bold mb-0">@Model.Title</h2>
+
+                        @if (Model.IsPublic)
+                        {
+                            <span class="badge bg-success">Public</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Private by Link</span>
+                        }
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(Model.Description))
                     {
-                        <span class="badge bg-success">Public</span>
+                        <p class="text-muted mb-2">@Model.Description</p>
                     }
-                    else
-                    {
-                        <span class="badge bg-secondary">Private by Link</span>
-                    }
+
+                    <small class="text-muted">
+                        Created by @Model.OwnerName · @Model.CreatedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")
+                    </small>
                 </div>
 
-                @if (!string.IsNullOrWhiteSpace(Model.Description))
+                @if (Model.IsCurrentUserEventOwner)
                 {
-                    <p class="text-muted mb-2">@Model.Description</p>
+                    <a asp-controller="Event"
+                       asp-action="Edit"
+                       asp-route-id="@Model.EventId"
+                       class="btn btn-outline-secondary btn-sm">
+                        Edit Event
+                    </a>
                 }
-
-                <small class="text-muted">
-                    Created by @Model.OwnerName · @Model.CreatedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")
-                </small>
             </div>
 
             <hr />
@@ -56,6 +69,13 @@
         <div class="card-body p-4">
             <h5 class="fw-bold mb-3">Share something</h5>
 
+            @if (TempData["PostError"] != null)
+            {
+                <div class="alert alert-danger">
+                    @TempData["PostError"]
+                </div>
+            }
+
             <form asp-controller="Post" asp-action="Create" method="post" enctype="multipart/form-data">
                 @Html.AntiForgeryToken()
 
@@ -75,6 +95,10 @@
                            class="form-control"
                            type="file"
                            accept="image/*" />
+
+                    <small class="text-muted">
+                        Allowed: jpg, jpeg, png, webp. Max size: 5 MB. Images wider than 1024px will be resized.
+                    </small>
                 </div>
 
                 <button type="submit" class="btn btn-primary">
@@ -143,18 +167,30 @@
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <strong class="small">@post.UserName</strong>
 
-                                @if (post.CanCurrentUserDelete)
-                                {
-                                    <button type="button"
-                                            class="btn btn-sm btn-delete-x"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#deletePostModal"
-                                            data-post-id="@post.Id"
-                                            title="Delete post"
-                                            aria-label="Delete post">
-                                        <span class="delete-x-symbol">×</span>
-                                    </button>
-                                }
+                                <div class="d-flex gap-2">
+                                    @if (post.CanCurrentUserEdit)
+                                    {
+                                        <a asp-controller="Post"
+                                           asp-action="Edit"
+                                           asp-route-id="@post.Id"
+                                           class="btn btn-sm btn-outline-secondary">
+                                            Edit
+                                        </a>
+                                    }
+
+                                    @if (post.CanCurrentUserDelete)
+                                    {
+                                        <button type="button"
+                                                class="btn btn-sm btn-delete-x"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#deletePostModal"
+                                                data-post-id="@post.Id"
+                                                title="Delete post"
+                                                aria-label="Delete post">
+                                            <span class="delete-x-symbol">×</span>
+                                        </button>
+                                    }
+                                </div>
                             </div>
 
                             @if (!string.IsNullOrWhiteSpace(post.Text))
@@ -347,6 +383,15 @@
         return null;
     }
 
+    function cleanScrollUrl() {
+        const url = new URL(window.location.href);
+
+        if (url.searchParams.has("scroll")) {
+            url.searchParams.delete("scroll");
+            history.replaceState(null, "", url.pathname + url.search);
+        }
+    }
+
     function restoreScrollPosition() {
         const targetScroll = getScrollTarget();
 
@@ -367,6 +412,10 @@
         setTimeout(function () {
             window.scrollTo(0, targetScroll);
         }, 700);
+
+        setTimeout(function () {
+            cleanScrollUrl();
+        }, 1000);
     }
 
     restoreScrollPosition();

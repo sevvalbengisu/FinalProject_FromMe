@@ -1,0 +1,55 @@
+@model FinalProject_FromMe.ViewModels.EventEditViewModel
+
+@{
+    ViewData["Title"] = "Edit Event";
+}
+
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <h2 class="fw-bold mb-3">Edit Event</h2>
+
+            <form asp-controller="Event" asp-action="Edit" method="post">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" asp-for="Id" />
+
+                <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Title" class="form-label">Event Title</label>
+                    <input asp-for="Title" class="form-control" />
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label">Description</label>
+                    <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+
+                <div class="form-check mb-4">
+                    <input asp-for="IsPublic" class="form-check-input" />
+                    <label asp-for="IsPublic" class="form-check-label">
+                        Public event
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-outline-secondary">
+                    Save Changes
+                </button>
+
+                <a asp-controller="Event"
+                   asp-action="Details"
+                   asp-route-id="@Model.Id"
+                   class="btn btn-outline-secondary">
+                    Cancel
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

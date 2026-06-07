@@ -18,5 +18,7 @@ public class PostViewModel
 
     public bool CanCurrentUserDelete { get; set; }
 
+    public bool CanCurrentUserEdit { get; set; }
+
     public List<CommentViewModel> Comments { get; set; } = new List<CommentViewModel>();
 }

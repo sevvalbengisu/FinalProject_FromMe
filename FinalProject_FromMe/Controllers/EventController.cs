@@ -1,8 +1,8 @@
+using System.Security.Claims;
 using FinalProject_FromMe.Data;
 using FinalProject_FromMe.Models;
 using FinalProject_FromMe.ViewModels;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,17 +12,17 @@ namespace FinalProject_FromMe.Controllers;
 public class EventController : Controller
 {
     private readonly ApplicationDbContext _context;
-    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IWebHostEnvironment _environment;
 
-    public EventController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+    public EventController(ApplicationDbContext context, IWebHostEnvironment environment)
     {
         _context = context;
-        _userManager = userManager;
+        _environment = environment;
     }
 
     public async Task<IActionResult> Index()
     {
-        var currentUserId = _userManager.GetUserId(User);
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         var events = await _context.Events
             .Where(e => e.OwnerId == currentUserId)
@@ -47,7 +47,7 @@ public class EventController : Controller
             return View(model);
         }
 
-        var currentUserId = _userManager.GetUserId(User);
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         if (currentUserId == null)
         {
@@ -58,8 +58,8 @@ public class EventController : Controller
         {
             Title = model.Title,
             Description = model.Description,
-            CreatedAt = DateTime.UtcNow,
             IsPublic = model.IsPublic,
+            CreatedAt = DateTime.UtcNow,
             OwnerId = currentUserId
         };
 
@@ -69,9 +69,71 @@ public class EventController : Controller
         return RedirectToAction("Details", new { id = newEvent.Id });
     }
 
+    [HttpGet]
+    public async Task<IActionResult> Edit(int id)
+    {
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        var eventItem = await _context.Events
+            .FirstOrDefaultAsync(e => e.Id == id);
+
+        if (eventItem == null)
+        {
+            return NotFound();
+        }
+
+        if (eventItem.OwnerId != currentUserId)
+        {
+            return Forbid();
+        }
+
+        var viewModel = new EventEditViewModel
+        {
+            Id = eventItem.Id,
+            Title = eventItem.Title,
+            Description = eventItem.Description,
+            IsPublic = eventItem.IsPublic
+        };
+
+        return View(viewModel);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(EventEditViewModel model)
+    {
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        var eventItem = await _context.Events
+            .FirstOrDefaultAsync(e => e.Id == model.Id);
+
+        if (eventItem == null)
+        {
+            return NotFound();
+        }
+
+        if (eventItem.OwnerId != currentUserId)
+        {
+            return Forbid();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        eventItem.Title = model.Title;
+        eventItem.Description = model.Description;
+        eventItem.IsPublic = model.IsPublic;
+
+        await _context.SaveChangesAsync();
+
+        return RedirectToAction("Details", new { id = eventItem.Id });
+    }
+
     public async Task<IActionResult> Details(int id, string sort = "newest")
     {
-        var currentUserId = _userManager.GetUserId(User);
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         var eventItem = await _context.Events
             .Include(e => e.Owner)
@@ -89,23 +151,37 @@ public class EventController : Controller
             return NotFound();
         }
 
-        var postsQuery = eventItem.Posts.AsEnumerable();
+        var postViewModels = eventItem.Posts
+            .Select(p => new PostViewModel
+            {
+                Id = p.Id,
+                Text = p.Text,
+                ImagePath = p.ImagePath,
+                CreatedAt = p.CreatedAt,
+                UserName = p.User != null ? p.User.UserName! : "Unknown User",
+                LikeCount = p.Likes.Count,
+                IsLikedByCurrentUser = p.Likes.Any(l => l.UserId == currentUserId),
+                CanCurrentUserDelete = p.UserId == currentUserId || eventItem.OwnerId == currentUserId,
+                CanCurrentUserEdit = p.UserId == currentUserId,
+                Comments = p.Comments
+                    .OrderBy(c => c.CreatedAt)
+                    .Select(c => new CommentViewModel
+                    {
+                        Id = c.Id,
+                        Text = c.Text,
+                        UserName = c.User != null ? c.User.UserName! : "Unknown User",
+                        CreatedAt = c.CreatedAt
+                    })
+                    .ToList()
+            })
+            .ToList();
 
-        if (sort == "oldest")
+        postViewModels = sort switch
         {
-            postsQuery = postsQuery.OrderBy(p => p.CreatedAt);
-        }
-        else if (sort == "mostLiked")
-        {
-            postsQuery = postsQuery
-                .OrderByDescending(p => p.Likes.Count)
-                .ThenByDescending(p => p.CreatedAt);
-        }
-        else
-        {
-            sort = "newest";
-            postsQuery = postsQuery.OrderByDescending(p => p.CreatedAt);
-        }
+            "oldest" => postViewModels.OrderBy(p => p.CreatedAt).ToList(),
+            "mostLiked" => postViewModels.OrderByDescending(p => p.LikeCount).ThenByDescending(p => p.CreatedAt).ToList(),
+            _ => postViewModels.OrderByDescending(p => p.CreatedAt).ToList()
+        };
 
         var viewModel = new EventDetailViewModel
         {
@@ -113,42 +189,21 @@ public class EventController : Controller
             Title = eventItem.Title,
             Description = eventItem.Description,
             CreatedAt = eventItem.CreatedAt,
-            OwnerName = eventItem.Owner?.UserName ?? "Unknown User",
+            OwnerName = eventItem.Owner != null ? eventItem.Owner.UserName! : "Unknown User",
             IsPublic = eventItem.IsPublic,
             IsCurrentUserEventOwner = eventItem.OwnerId == currentUserId,
             CurrentSort = sort,
+            Posts = postViewModels,
             NewPost = new CreatePostViewModel
             {
                 EventId = eventItem.Id
-            },
-            Posts = postsQuery
-                .Select(p => new PostViewModel
-                {
-                    Id = p.Id,
-                    Text = p.Text,
-                    ImagePath = p.ImagePath,
-                    CreatedAt = p.CreatedAt,
-                    UserName = p.User?.UserName ?? "Unknown User",
-                    LikeCount = p.Likes.Count,
-                    IsLikedByCurrentUser = p.Likes.Any(l => l.UserId == currentUserId),
-                    CanCurrentUserDelete = p.UserId == currentUserId || eventItem.OwnerId == currentUserId,
-                    Comments = p.Comments
-                        .OrderBy(c => c.CreatedAt)
-                        .Select(c => new CommentViewModel
-                        {
-                            Id = c.Id,
-                            Text = c.Text,
-                            UserName = c.User?.UserName ?? "Unknown User",
-                            CreatedAt = c.CreatedAt
-                        })
-                        .ToList()
-                })
-                .ToList()
+            }
         };
 
         return View(viewModel);
     }
 
+    [AllowAnonymous]
     public async Task<IActionResult> Explore(string? search, string? owner)
     {
         var query = _context.Events
@@ -182,10 +237,8 @@ public class EventController : Controller
                 Description = e.Description,
                 OwnerName = e.Owner != null ? e.Owner.UserName! : "Unknown User",
                 CreatedAt = e.CreatedAt,
-                PostCount = e.Posts.Count,
-                LastActivityAt = e.Posts.Any()
-                    ? e.Posts.Max(p => p.CreatedAt)
-                    : e.CreatedAt
+                LastActivityAt = e.Posts.Any() ? e.Posts.Max(p => p.CreatedAt) : e.CreatedAt,
+                PostCount = e.Posts.Count
             })
             .OrderByDescending(e => e.LastActivityAt)
             .ToListAsync();
@@ -200,6 +253,7 @@ public class EventController : Controller
         return View(viewModel);
     }
 
+    [AllowAnonymous]
     public IActionResult Join(int id)
     {
         return RedirectToAction("Details", new { id });
@@ -209,15 +263,13 @@ public class EventController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(int id)
     {
-        var currentUserId = _userManager.GetUserId(User);
-
-        if (currentUserId == null)
-        {
-            return Unauthorized();
-        }
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         var eventItem = await _context.Events
             .Include(e => e.Posts)
+                .ThenInclude(p => p.Likes)
+            .Include(e => e.Posts)
+                .ThenInclude(p => p.Comments)
             .FirstOrDefaultAsync(e => e.Id == id);
 
         if (eventItem == null)
@@ -230,9 +282,37 @@ public class EventController : Controller
             return Forbid();
         }
 
+        foreach (var post in eventItem.Posts)
+        {
+            DeleteImageFile(post.ImagePath);
+
+            _context.Likes.RemoveRange(post.Likes);
+            _context.Comments.RemoveRange(post.Comments);
+        }
+
+        _context.Posts.RemoveRange(eventItem.Posts);
         _context.Events.Remove(eventItem);
+
         await _context.SaveChangesAsync();
 
         return RedirectToAction("Index");
+    }
+
+    private void DeleteImageFile(string? imagePath)
+    {
+        if (string.IsNullOrWhiteSpace(imagePath))
+        {
+            return;
+        }
+
+        var imageFullPath = Path.Combine(
+            _environment.WebRootPath,
+            imagePath.TrimStart('/').Replace("/", Path.DirectorySeparatorChar.ToString())
+        );
+
+        if (System.IO.File.Exists(imageFullPath))
+        {
+            System.IO.File.Delete(imageFullPath);
+        }
     }
 }

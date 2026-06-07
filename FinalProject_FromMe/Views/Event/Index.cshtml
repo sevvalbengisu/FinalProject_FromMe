@@ -83,8 +83,15 @@
                             <a asp-controller="Event"
                                asp-action="Details"
                                asp-route-id="@eventItem.Id"
-                               class="btn btn-outline-primary w-100">
+                               class="btn btn-outline-primary w-100 mb-2">
                                 Open Event
+                            </a>
+
+                            <a asp-controller="Event"
+                               asp-action="Edit"
+                               asp-route-id="@eventItem.Id"
+                               class="btn btn-outline-secondary w-100">
+                                Edit Event
                             </a>
                         </div>
                     </div>

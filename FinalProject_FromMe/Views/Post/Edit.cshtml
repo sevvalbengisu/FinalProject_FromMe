@@ -1,0 +1,64 @@
+@model FinalProject_FromMe.ViewModels.PostEditViewModel
+
+@{
+    ViewData["Title"] = "Edit Post";
+}
+
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <h2 class="fw-bold mb-3">Edit Post</h2>
+
+            <form asp-controller="Post" asp-action="Edit" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" asp-for="Id" />
+
+                <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                @if (!string.IsNullOrWhiteSpace(Model.ExistingImagePath))
+                {
+                    <div class="mb-3">
+                        <label class="form-label">Current Image</label>
+                        <br />
+                        <img src="@Model.ExistingImagePath"
+                             alt="Current post image"
+                             class="img-fluid rounded border"
+                             style="max-width: 420px;" />
+                    </div>
+                }
+
+                <div class="mb-3">
+                    <label asp-for="Text" class="form-label">Post Text</label>
+                    <textarea asp-for="Text" class="form-control" rows="4"></textarea>
+                    <span asp-validation-for="Text" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Image" class="form-label">Upload New Image</label>
+                    <input asp-for="Image" class="form-control" type="file" accept="image/*" />
+                    <span asp-validation-for="Image" class="text-danger"></span>
+
+                    <small class="text-muted">
+                        Allowed: jpg, jpeg, png, webp. Max size: 5 MB. Images wider than 1024px will be resized.
+                    </small>
+                </div>
+
+                <button type="submit" class="btn btn-outline-secondary">
+                    Save Changes
+                </button>
+
+                <a asp-controller="Event"
+                   asp-action="Details"
+                   asp-route-id="@Model.EventId"
+                   class="btn btn-outline-secondary">
+                    Cancel
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
