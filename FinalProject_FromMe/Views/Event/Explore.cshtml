@@ -61,7 +61,7 @@
         <div class="row g-4">
             @foreach (var eventItem in Model.Events)
             {
-                var accentClass = $"accent-{eventItem.EventId % 5}";
+                var accentClass = $"accent-{eventItem.EventId % 15}";
 
                 <div class="col-sm-6 col-lg-3">
                     <div class="card shadow-sm h-100 fromme-accent-card @accentClass">

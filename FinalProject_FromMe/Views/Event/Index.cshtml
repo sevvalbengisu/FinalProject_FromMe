@@ -27,22 +27,38 @@
         <div class="row g-4">
             @foreach (var eventItem in Model)
             {
-                var accentClass = $"accent-{eventItem.Id % 5}";
+                var accentClass = $"accent-{eventItem.Id % 15}";
 
-                <div class="col-md-4">
+                <div class="col-sm-6 col-lg-3">
                     <div class="card shadow-sm h-100 fromme-accent-card @accentClass">
                         <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <h5 class="card-title fw-bold mb-0">@eventItem.Title</h5>
 
-                                @if (eventItem.IsPublic)
-                                {
-                                    <span class="badge bg-success">Public</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary">Private Link</span>
-                                }
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    @if (eventItem.IsPublic)
+                                    {
+                                        <span class="badge bg-success mb-2">Public</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary mb-2">Private Link</span>
+                                    }
+
+                                    <h5 class="card-title fw-bold mb-0">
+                                        @eventItem.Title
+                                    </h5>
+                                </div>
+
+                                <button type="button"
+                                        class="btn btn-sm btn-delete-x"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#deleteEventModal"
+                                        data-event-id="@eventItem.Id"
+                                        data-event-title="@eventItem.Title"
+                                        title="Delete event"
+                                        aria-label="Delete event">
+                                    <span class="delete-x-symbol">×</span>
+                                </button>
                             </div>
 
                             @if (!string.IsNullOrWhiteSpace(eventItem.Description))
@@ -67,18 +83,9 @@
                             <a asp-controller="Event"
                                asp-action="Details"
                                asp-route-id="@eventItem.Id"
-                               class="btn btn-outline-primary w-100 mb-2">
+                               class="btn btn-outline-primary w-100">
                                 Open Event
                             </a>
-
-                            <button type="button"
-                                    class="btn btn-outline-danger w-100"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#deleteEventModal"
-                                    data-event-id="@eventItem.Id"
-                                    data-event-title="@eventItem.Title">
-                                Delete Event
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -122,7 +129,7 @@
 
                     <input type="hidden" name="id" id="deleteEventId" />
 
-                    <button type="submit" class="btn btn-danger">
+                    <button type="submit" class="btn btn-danger delete-confirm-button">
                         Yes, delete it
                     </button>
                 </form>

@@ -3,7 +3,7 @@
 @{
     ViewData["Title"] = Model.Title;
     var joinLink = $"{Context.Request.Scheme}://{Context.Request.Host}/Event/Join/{Model.EventId}";
-    var eventAccentClass = $"accent-{Model.EventId % 5}";
+    var eventAccentClass = $"accent-{Model.EventId % 15}";
 }
 
 <div class="container mt-4">
@@ -141,32 +141,32 @@
                         <div class="card-body">
 
                             <div class="d-flex justify-content-between align-items-start mb-2">
-                                <div>
-                                    <strong class="small">@post.UserName</strong>
-                                    <br />
-                                    <small class="text-muted">
-                                        @post.CreatedAt.ToLocalTime().ToString("dd MMM")
-                                    </small>
-                                </div>
+                                <strong class="small">@post.UserName</strong>
 
                                 @if (post.CanCurrentUserDelete)
                                 {
                                     <button type="button"
-                                            class="btn btn-sm btn-outline-danger"
+                                            class="btn btn-sm btn-delete-x"
                                             data-bs-toggle="modal"
                                             data-bs-target="#deletePostModal"
-                                            data-post-id="@post.Id">
-                                        Delete
+                                            data-post-id="@post.Id"
+                                            title="Delete post"
+                                            aria-label="Delete post">
+                                        <span class="delete-x-symbol">×</span>
                                     </button>
                                 }
                             </div>
 
                             @if (!string.IsNullOrWhiteSpace(post.Text))
                             {
-                                <p class="card-text">
+                                <p class="card-text mb-1">
                                     @post.Text
                                 </p>
                             }
+
+                            <small class="text-muted d-block mb-3">
+                                @post.CreatedAt.ToLocalTime().ToString("dd MMM")
+                            </small>
 
                             <div class="d-flex align-items-center gap-2 mb-3">
                                 <form asp-controller="Like" asp-action="Toggle" method="post">
@@ -269,7 +269,7 @@
                     <input type="hidden" name="postId" id="deletePostId" />
                     <input type="hidden" name="eventId" value="@Model.EventId" />
 
-                    <button type="submit" class="btn btn-danger">
+                    <button type="submit" class="btn btn-danger delete-confirm-button">
                         Yes, delete it
                     </button>
                 </form>
@@ -280,6 +280,12 @@
 </div>
 
 <script>
+    const scrollStorageKey = "frommeScrollPosition_@Model.EventId";
+
+    if ("scrollRestoration" in history) {
+        history.scrollRestoration = "manual";
+    }
+
     function copyEventLink() {
         const linkInput = document.getElementById("eventLinkInput");
 
@@ -298,8 +304,78 @@
             const button = event.relatedTarget;
             const postId = button.getAttribute("data-post-id");
 
-            const deletePostIdInput = document.getElementById("deletePostId");
-            deletePostIdInput.value = postId;
+            document.getElementById("deletePostId").value = postId;
         });
     }
+
+    function saveScrollPositionForForm(form) {
+        let scrollInput = form.querySelector("input[name='returnScroll']");
+
+        if (!scrollInput) {
+            scrollInput = document.createElement("input");
+            scrollInput.type = "hidden";
+            scrollInput.name = "returnScroll";
+            form.appendChild(scrollInput);
+        }
+
+        const currentScroll = Math.round(window.scrollY).toString();
+
+        scrollInput.value = currentScroll;
+        sessionStorage.setItem(scrollStorageKey, currentScroll);
+    }
+
+    document.addEventListener("submit", function (event) {
+        if (event.target && event.target.tagName === "FORM") {
+            saveScrollPositionForForm(event.target);
+        }
+    }, true);
+
+    function getScrollTarget() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const scrollFromUrl = urlParams.get("scroll");
+
+        if (scrollFromUrl !== null) {
+            return parseInt(scrollFromUrl);
+        }
+
+        const scrollFromStorage = sessionStorage.getItem(scrollStorageKey);
+
+        if (scrollFromStorage !== null) {
+            return parseInt(scrollFromStorage);
+        }
+
+        return null;
+    }
+
+    function restoreScrollPosition() {
+        const targetScroll = getScrollTarget();
+
+        if (targetScroll === null || isNaN(targetScroll)) {
+            return;
+        }
+
+        window.scrollTo(0, targetScroll);
+
+        setTimeout(function () {
+            window.scrollTo(0, targetScroll);
+        }, 100);
+
+        setTimeout(function () {
+            window.scrollTo(0, targetScroll);
+        }, 300);
+
+        setTimeout(function () {
+            window.scrollTo(0, targetScroll);
+        }, 700);
+    }
+
+    restoreScrollPosition();
+
+    document.addEventListener("DOMContentLoaded", function () {
+        restoreScrollPosition();
+    });
+
+    window.addEventListener("load", function () {
+        restoreScrollPosition();
+    });
 </script>

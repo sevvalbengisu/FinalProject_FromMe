@@ -1,7 +1,7 @@
+using System.Security.Claims;
 using FinalProject_FromMe.Data;
 using FinalProject_FromMe.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,51 +11,47 @@ namespace FinalProject_FromMe.Controllers;
 public class CommentController : Controller
 {
     private readonly ApplicationDbContext _context;
-    private readonly UserManager<ApplicationUser> _userManager;
 
-    public CommentController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+    public CommentController(ApplicationDbContext context)
     {
         _context = context;
-        _userManager = userManager;
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(int postId, int eventId, string text)
+    public async Task<IActionResult> Create(int postId, int eventId, string text, int returnScroll = 0)
     {
-        var currentUserId = _userManager.GetUserId(User);
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         if (currentUserId == null)
         {
-            return Unauthorized();
+            return RedirectToAction("Login", "Account");
         }
 
-        var postExists = await _context.Posts.AnyAsync(p => p.Id == postId);
+        var postExists = await _context.Posts
+            .AnyAsync(p => p.Id == postId && p.EventId == eventId);
 
         if (!postExists)
         {
             return NotFound();
         }
 
-        // Boş yorum kontrolü:
-        // Kullanıcı boş yorum gönderdiyse yorum oluşturmayız.
         if (string.IsNullOrWhiteSpace(text))
         {
-            return Redirect(Url.Action("Details", "Event", new { id = eventId }) + $"#post-{postId}");
+            return RedirectToAction("Details", "Event", new { id = eventId, scroll = returnScroll });
         }
 
         var comment = new Comment
         {
             Text = text,
+            CreatedAt = DateTime.UtcNow,
             PostId = postId,
-            UserId = currentUserId,
-            CreatedAt = DateTime.UtcNow
+            UserId = currentUserId
         };
 
         _context.Comments.Add(comment);
         await _context.SaveChangesAsync();
 
-        // Yorum eklendikten sonra sayfa ilgili postun olduğu yere geri dönsün.
-        return Redirect(Url.Action("Details", "Event", new { id = eventId }) + $"#post-{postId}");
+        return RedirectToAction("Details", "Event", new { id = eventId, scroll = returnScroll });
     }
 }

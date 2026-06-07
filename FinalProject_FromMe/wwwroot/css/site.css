@@ -31,7 +31,7 @@ body > .container-fluid {
 .btn-link.nav-link:focus,
 .form-control:focus,
 .form-check-input:focus {
-    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
 }
 
 .form-floating > .form-control-plaintext::placeholder,
@@ -58,52 +58,95 @@ body > .container-fluid {
     height: auto;
 }
 
-/* FromMe visual identity */
+/* Event accent colors */
 .fromme-accent-card {
-    border-top-width: 5px;
+    border-top-width: 8px;
     border-top-style: solid;
 }
 
 .accent-0 {
-    border-top-color: #7a1b0c;
+    border-top-color: #e11d48;
 }
 
 .accent-1 {
-    border-top-color: #1f6f5b;
+    border-top-color: #f97316;
 }
 
 .accent-2 {
-    border-top-color: #345995;
+    border-top-color: #facc15;
 }
 
 .accent-3 {
-    border-top-color: #b26a00;
+    border-top-color: #22c55e;
 }
 
 .accent-4 {
-    border-top-color: #6f3fa0;
+    border-top-color: #14b8a6;
 }
 
-.event-context {
-    background: #faf7f6;
-    border: 1px solid #eadedb;
-    border-radius: 8px;
-    padding: 12px;
+.accent-5 {
+    border-top-color: #06b6d4;
 }
 
+.accent-6 {
+    border-top-color: #2563eb;
+}
+
+.accent-7 {
+    border-top-color: #4f46e5;
+}
+
+.accent-8 {
+    border-top-color: #7c3aed;
+}
+
+.accent-9 {
+    border-top-color: #c026d3;
+}
+
+.accent-10 {
+    border-top-color: #db2777;
+}
+
+.accent-11 {
+    border-top-color: #ef4444;
+}
+
+.accent-12 {
+    border-top-color: #84cc16;
+}
+
+.accent-13 {
+    border-top-color: #0ea5e9;
+}
+
+.accent-14 {
+    border-top-color: #a855f7;
+}
 .event-title {
     color: #212529;
 }
 
 .owner-link {
-    color: #7a1b0c;
+    color: #dc3545;
     font-weight: 600;
     text-decoration: none;
 }
 
 .owner-link:hover {
-    color: #4e1007;
+    color: #bb2d3b;
     text-decoration: underline;
+}
+
+/* Home post event info */
+.post-event-info {
+    margin-bottom: 10px;
+}
+
+.post-separator {
+    margin: 12px 0 16px;
+    border-top: 1px solid #e5e5e5;
+    opacity: 1;
 }
 
 /* Padlet-like masonry post layout */
@@ -128,6 +171,11 @@ body > .container-fluid {
     object-fit: cover;
 }
 
+/* Event detail post images can be larger */
+.masonry-item .post-card img {
+    max-height: 330px;
+}
+
 .comments-box {
     max-height: 120px;
     overflow-y: auto;
@@ -136,7 +184,7 @@ body > .container-fluid {
 /* Landing page */
 .landing-hero {
     padding: 90px 0 80px;
-    background: linear-gradient(135deg, #fff 0%, #fff5f4 100%);
+    background: linear-gradient(135deg, #ffffff 0%, #fff5f4 100%);
 }
 
 .landing-section {
@@ -198,6 +246,84 @@ body > .container-fluid {
 .cta-box {
     max-width: 760px;
     margin: 0 auto;
+}
+
+/* Primary buttons */
+.btn-primary {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+    background-color: #bb2d3b;
+    border-color: #b02a37;
+}
+
+.btn-outline-primary {
+    color: #dc3545;
+    border-color: #dc3545;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus,
+.btn-outline-primary:active {
+    color: #ffffff;
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.btn-check:checked + .btn-outline-primary,
+.btn-outline-primary.active,
+.btn-outline-primary.dropdown-toggle.show {
+    color: #ffffff;
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+/* X delete button */
+.btn-delete-x {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid #adb5bd;
+    color: #6c757d;
+    background-color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-x-symbol {
+    display: block;
+    font-size: 24px;
+    line-height: 1;
+    transform: translateY(-1px);
+}
+
+.btn-delete-x:hover,
+.btn-delete-x:focus,
+.btn-delete-x:active {
+    color: #ffffff;
+    background-color: #b00020;
+    border-color: #b00020;
+}
+
+/* Final delete confirmation */
+.delete-confirm-button {
+    background-color: #9f0018 !important;
+    border-color: #9f0018 !important;
+    color: #ffffff !important;
+}
+
+.delete-confirm-button:hover,
+.delete-confirm-button:focus,
+.delete-confirm-button:active {
+    background-color: #780012 !important;
+    border-color: #780012 !important;
+    color: #ffffff !important;
 }
 
 /* Responsive masonry columns */

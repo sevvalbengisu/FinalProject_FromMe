@@ -149,7 +149,7 @@ else
             <div class="masonry-grid">
                 @foreach (var post in Model.RecentPosts)
                 {
-                    var accentClass = $"accent-{post.EventId % 5}";
+                    var accentClass = $"accent-{post.EventId % 15}";
 
                     <div class="masonry-item">
                         <div class="card shadow-sm post-card fromme-accent-card @accentClass">
@@ -163,7 +163,7 @@ else
 
                             <div class="card-body">
 
-                                <div class="event-context mb-3">
+                                <div class="post-event-info">
                                     <div class="d-flex justify-content-between align-items-start">
                                         <div>
                                             <div class="small text-muted">Event</div>
@@ -193,6 +193,8 @@ else
                                         }
                                     </div>
                                 </div>
+
+                                <hr class="post-separator" />
 
                                 <div class="mb-2">
                                     <small class="text-muted">Shared by</small>

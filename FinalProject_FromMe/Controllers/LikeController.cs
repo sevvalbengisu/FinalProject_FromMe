@@ -1,7 +1,7 @@
+using System.Security.Claims;
 using FinalProject_FromMe.Data;
 using FinalProject_FromMe.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,26 +11,25 @@ namespace FinalProject_FromMe.Controllers;
 public class LikeController : Controller
 {
     private readonly ApplicationDbContext _context;
-    private readonly UserManager<ApplicationUser> _userManager;
 
-    public LikeController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+    public LikeController(ApplicationDbContext context)
     {
         _context = context;
-        _userManager = userManager;
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Toggle(int postId, int eventId)
+    public async Task<IActionResult> Toggle(int postId, int eventId, int returnScroll = 0)
     {
-        var currentUserId = _userManager.GetUserId(User);
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         if (currentUserId == null)
         {
-            return Unauthorized();
+            return RedirectToAction("Login", "Account");
         }
 
-        var postExists = await _context.Posts.AnyAsync(p => p.Id == postId);
+        var postExists = await _context.Posts
+            .AnyAsync(p => p.Id == postId && p.EventId == eventId);
 
         if (!postExists)
         {
@@ -45,8 +44,7 @@ public class LikeController : Controller
             var like = new Like
             {
                 PostId = postId,
-                UserId = currentUserId,
-                CreatedAt = DateTime.UtcNow
+                UserId = currentUserId
             };
 
             _context.Likes.Add(like);
@@ -58,6 +56,6 @@ public class LikeController : Controller
 
         await _context.SaveChangesAsync();
 
-        return Redirect(Url.Action("Details", "Event", new { id = eventId }) + $"#post-{postId}");
+        return RedirectToAction("Details", "Event", new { id = eventId, scroll = returnScroll });
     }
 }

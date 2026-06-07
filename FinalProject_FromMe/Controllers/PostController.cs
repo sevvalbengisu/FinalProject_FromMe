@@ -1,8 +1,7 @@
+using System.Security.Claims;
 using FinalProject_FromMe.Data;
 using FinalProject_FromMe.Models;
-using FinalProject_FromMe.ViewModels;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,45 +11,40 @@ namespace FinalProject_FromMe.Controllers;
 public class PostController : Controller
 {
     private readonly ApplicationDbContext _context;
-    private readonly UserManager<ApplicationUser> _userManager;
     private readonly IWebHostEnvironment _environment;
 
-    public PostController(
-        ApplicationDbContext context,
-        UserManager<ApplicationUser> userManager,
-        IWebHostEnvironment environment)
+    public PostController(ApplicationDbContext context, IWebHostEnvironment environment)
     {
         _context = context;
-        _userManager = userManager;
         _environment = environment;
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(CreatePostViewModel model)
+    public async Task<IActionResult> Create(int eventId, string? text, IFormFile? image, int returnScroll = 0)
     {
-        var currentUserId = _userManager.GetUserId(User);
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         if (currentUserId == null)
         {
-            return Unauthorized();
+            return RedirectToAction("Login", "Account");
         }
 
-        var eventExists = await _context.Events.AnyAsync(e => e.Id == model.EventId);
+        var eventExists = await _context.Events.AnyAsync(e => e.Id == eventId);
 
         if (!eventExists)
         {
             return NotFound();
         }
 
-        if (string.IsNullOrWhiteSpace(model.Text) && model.Image == null)
+        if (string.IsNullOrWhiteSpace(text) && image == null)
         {
-            return Redirect(Url.Action("Details", "Event", new { id = model.EventId }) + "#share-form");
+            return RedirectToAction("Details", "Event", new { id = eventId, scroll = returnScroll });
         }
 
         string? imagePath = null;
 
-        if (model.Image != null && model.Image.Length > 0)
+        if (image != null && image.Length > 0)
         {
             var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads", "posts");
 
@@ -59,47 +53,49 @@ public class PostController : Controller
                 Directory.CreateDirectory(uploadsFolder);
             }
 
-            var fileExtension = Path.GetExtension(model.Image.FileName);
-            var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
-            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+            var fileExtension = Path.GetExtension(image.FileName);
+            var fileName = $"{Guid.NewGuid()}{fileExtension}";
+            var fullPath = Path.Combine(uploadsFolder, fileName);
 
-            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            await using (var stream = new FileStream(fullPath, FileMode.Create))
             {
-                await model.Image.CopyToAsync(fileStream);
+                await image.CopyToAsync(stream);
             }
 
-            imagePath = $"/uploads/posts/{uniqueFileName}";
+            imagePath = $"/uploads/posts/{fileName}";
         }
 
         var post = new Post
         {
-            Text = model.Text,
+            Text = text,
             ImagePath = imagePath,
-            EventId = model.EventId,
-            UserId = currentUserId,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            EventId = eventId,
+            UserId = currentUserId
         };
 
         _context.Posts.Add(post);
         await _context.SaveChangesAsync();
 
-        return Redirect(Url.Action("Details", "Event", new { id = model.EventId }) + $"#post-{post.Id}");
+        return RedirectToAction("Details", "Event", new { id = eventId, scroll = returnScroll });
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Delete(int postId, int eventId)
+    public async Task<IActionResult> Delete(int postId, int eventId, int returnScroll = 0)
     {
-        var currentUserId = _userManager.GetUserId(User);
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         if (currentUserId == null)
         {
-            return Unauthorized();
+            return RedirectToAction("Login", "Account");
         }
 
         var post = await _context.Posts
             .Include(p => p.Event)
-            .FirstOrDefaultAsync(p => p.Id == postId);
+            .Include(p => p.Likes)
+            .Include(p => p.Comments)
+            .FirstOrDefaultAsync(p => p.Id == postId && p.EventId == eventId);
 
         if (post == null)
         {
@@ -116,18 +112,23 @@ public class PostController : Controller
 
         if (!string.IsNullOrWhiteSpace(post.ImagePath))
         {
-            var relativePath = post.ImagePath.TrimStart('/');
-            var fullPath = Path.Combine(_environment.WebRootPath, relativePath);
+            var imageFullPath = Path.Combine(
+                _environment.WebRootPath,
+                post.ImagePath.TrimStart('/').Replace("/", Path.DirectorySeparatorChar.ToString())
+            );
 
-            if (System.IO.File.Exists(fullPath))
+            if (System.IO.File.Exists(imageFullPath))
             {
-                System.IO.File.Delete(fullPath);
+                System.IO.File.Delete(imageFullPath);
             }
         }
 
+        _context.Likes.RemoveRange(post.Likes);
+        _context.Comments.RemoveRange(post.Comments);
         _context.Posts.Remove(post);
+
         await _context.SaveChangesAsync();
 
-        return RedirectToAction("Details", "Event", new { id = eventId });
+        return RedirectToAction("Details", "Event", new { id = eventId, scroll = returnScroll });
     }
 }
